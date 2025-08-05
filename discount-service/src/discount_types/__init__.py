@@ -1,0 +1,1 @@
+# This file marks the discount_types directory as a package.
