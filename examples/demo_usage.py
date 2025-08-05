@@ -14,12 +14,12 @@ Run this script to see examples of:
 """
 
 import asyncio
+import os
 import sys
 from decimal import Decimal
 from typing import List
 
-# Add src to path for imports
-sys.path.append('src')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.services.discount_service import DiscountService
 from src.models.product import Product, BrandTier
@@ -41,7 +41,7 @@ class DiscountServiceDemo:
                 brand_tier=BrandTier.REGULAR,
                 category="T-shirts",
                 base_price=Decimal('1000'),
-                current_price=Decimal('500')  # After 40% brand + 10% category discount
+                current_price=Decimal('1000')  # Use base price for clean interface demo
             ),
             Product(
                 id="NIKE001", 
@@ -49,7 +49,7 @@ class DiscountServiceDemo:
                 brand_tier=BrandTier.PREMIUM,
                 category="Shoes",
                 base_price=Decimal('5000'),
-                current_price=Decimal('2600')  # After 35% brand + 20% category discount
+                current_price=Decimal('5000')  # Use base price for clean interface demo
             ),
             Product(
                 id="ZARA001",
@@ -57,7 +57,7 @@ class DiscountServiceDemo:
                 brand_tier=BrandTier.REGULAR,
                 category="Jeans",
                 base_price=Decimal('2000'),
-                current_price=Decimal('1275')  # After 25% brand + 15% category discount
+                current_price=Decimal('2000')  # Use base price for clean interface demo
             )
         ]
     
@@ -67,16 +67,16 @@ class DiscountServiceDemo:
             id="CUST001",
             name="John Doe",
             email="john.doe@example.com", 
-            tier="GOLD",
+            tier="premium",
             loyalty_points=1500
         )
     
     def create_cart_items(self, products: List[Product]) -> List[CartItem]:
         """Create cart items from products"""
         return [
-            CartItem(product=products[0], quantity=2, size="M"),    # 2x PUMA T-shirts
-            CartItem(product=products[1], quantity=1, size="9"),    # 1x NIKE Shoes  
-            CartItem(product=products[2], quantity=1, size="32")    # 1x ZARA Jeans
+            CartItem(product=products[0], quantity=2, size="M", price=products[0].base_price),    # 2x PUMA T-shirts
+            CartItem(product=products[1], quantity=1, size="9", price=products[1].base_price),    # 1x NIKE Shoes  
+            CartItem(product=products[2], quantity=1, size="32", price=products[2].base_price)    # 1x ZARA Jeans
         ]
     
     def print_cart_summary(self, cart_items: List[CartItem]):
@@ -99,8 +99,7 @@ class DiscountServiceDemo:
             print()
         
         print(f"💰 Cart Total (Base): ₹{total_base}")
-        print(f"💰 Cart Total (After Brand/Category): ₹{total_current}")
-        print(f"💾 Pre-applied Savings: ₹{total_base - total_current}")
+        print(f"💰 Cart Total (Current): ₹{total_current}")
         print("=" * 60)
     
     def print_discount_result(self, result, scenario_name: str):
@@ -116,7 +115,7 @@ class DiscountServiceDemo:
         
         print(f"Final Price: ₹{result.final_price}")
         print(f"Total Savings: ₹{result.original_price - result.final_price}")
-        savings_percent = ((result.original_price - result.final_price) / result.original_price) * 100
+        savings_percent = ((result.original_price - result.final_price) / result.original_price) * 100 if result.original_price > 0 else 0
         print(f"Savings Percentage: {savings_percent:.1f}%")
         print(f"Status: {result.message}")
         print("=" * 60)
@@ -134,16 +133,35 @@ class DiscountServiceDemo:
         # Display cart
         self.print_cart_summary(cart_items)
         
-        # Scenario 1: No additional discounts
-        print("\n📊 SCENARIO 1: Brand & Category Discounts Only")
-        result1 = await self.discount_service.calculate_cart_discounts(
+        # Scenario 1: Brand discounts using new interface
+        print("\n📊 SCENARIO 1: Brand Discounts Only")
+        brand_discount_configs = [
+            {
+                "type": "brand",
+                "brand": "PUMA",
+                "discount_percentage": Decimal("40")  # 40% discount on PUMA
+            },
+            {
+                "type": "brand", 
+                "brand": "NIKE",
+                "discount_percentage": Decimal("35")  # 35% discount on NIKE
+            },
+            {
+                "type": "brand",
+                "brand": "ZARA", 
+                "discount_percentage": Decimal("25")  # 25% discount on ZARA
+            }
+        ]
+        
+        result1 = await self.discount_service.apply_advanced_discounts(
             cart_items=cart_items,
-            customer=customer
+            customer=customer,
+            discount_configs=brand_discount_configs
         )
-        self.print_discount_result(result1, "Base Discounts Applied")
+        self.print_discount_result(result1, "Brand Discounts Applied")
         
         # Scenario 2: Add Bank Offer
-        print("\n📊 SCENARIO 2: + Bank Card Offer")
+        print("\n📊 SCENARIO 2: Brand Discounts + Bank Card Offer")
         icici_payment = PaymentInfo(
             method="CARD",
             bank_name="ICICI", 
@@ -158,7 +176,7 @@ class DiscountServiceDemo:
         self.print_discount_result(result2, "With ICICI Bank Offer")
         
         # Scenario 3: Add Voucher Code
-        print("\n📊 SCENARIO 3: + Voucher Code")
+        print("\n📊 SCENARIO 3: Brand Discounts + Bank Offer + Voucher Code")
         result3 = await self.discount_service.calculate_cart_discounts(
             cart_items=cart_items,
             customer=customer,
@@ -182,6 +200,31 @@ class DiscountServiceDemo:
             voucher_code="SUPER69"
         )
         self.print_discount_result(result4, "With HDFC Bank Offer")
+        
+        # Scenario 5: Advanced discounts with multiple types
+        print("\n📊 SCENARIO 5: Advanced Multi-Type Discounts")
+        advanced_configs = [
+            {
+                "type": "brand",
+                "brand": "NIKE",
+                "discount_percentage": Decimal("20"),
+                "max_discount": Decimal("800")
+            },
+            {
+                "type": "tier",
+                "required_tier": "premium",
+                "discount_percentage": Decimal("10"),
+                "max_discount": Decimal("500")
+            }
+        ]
+        
+        result5 = await self.discount_service.apply_advanced_discounts(
+            cart_items=cart_items,
+            customer=customer,
+            payment_info=icici_payment,
+            discount_configs=advanced_configs
+        )
+        self.print_discount_result(result5, "Advanced Multi-Type Discounts")
         
         # Voucher Validation Demo
         print("\n📊 VOUCHER VALIDATION DEMO")

@@ -1,63 +1,70 @@
-# Discount Service
+# Fashion E-Commerce Discount Service
 
-This project implements a discount service for a fashion e-commerce website, capable of handling various discount scenarios including brand-specific discounts, bank card offers, category-specific deals, and voucher codes.
+A comprehensive discount service for fashion e-commerce platforms, capable of handling various discount scenarios including brand-specific discounts, bank card offers, category-specific deals, and voucher codes with advanced stacking capabilities.
 
-## Features
+## 🌟 Features
 
-- **Brand-Specific Discounts**: Apply discounts based on the brand of the product (e.g., "Min 40% off on PUMA").
-- **Bank Card Offers**: Instant discounts for specific bank card transactions (e.g., "10% instant discount on ICICI Bank cards").
-- **Category-Specific Deals**: Additional discounts based on product categories (e.g., "Extra 10% off on T-shirts").
-- **Vouchers**: Support for discount codes that can be applied to any product (e.g., 'SUPER69' for 69% off).
-- **Multiple Discount Stacking**: Apply multiple discounts in the correct order for maximum savings.
+- **Brand-Specific Discounts**: Apply discounts based on product brands (e.g., "Min 40% off on PUMA")
+- **Bank Card Offers**: Instant discounts for specific bank card transactions (e.g., "10% instant discount on ICICI Bank cards")
+- **Category-Specific Deals**: Additional discounts based on product categories (e.g., "Extra 10% off on T-shirts")
+- **Voucher Codes**: Support for discount codes that can be applied to any product (e.g., 'SUPER69' for special offers)
+- **Customer Tier Benefits**: Special discounts for premium customers
+- **Advanced Discount Stacking**: Apply multiple discounts with intelligent priority handling
+- **Factory Pattern**: Extensible discount system for easy addition of new discount types
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-discount-service/
+unifize-assignment/
 ├── src/
 │   ├── models/
 │   │   ├── __init__.py           # Model exports
 │   │   ├── product.py            # Product and BrandTier definitions
-│   │   ├── cart.py               # CartItem and PaymentInfo definitions
-│   │   ├── customer.py           # CustomerProfile and CustomerTier definitions
+│   │   ├── cart.py               # CartItem definition
+│   │   ├── customer.py           # CustomerProfile definition
+│   │   ├── payment.py            # PaymentInfo definition
 │   │   └── discount.py           # DiscountedPrice definition
 │   ├── services/
 │   │   ├── __init__.py           # Service exports
-│   │   ├── discount_service.py   # Main DiscountService implementation
-│   │   └── validation_service.py # Voucher validation logic
+│   │   └── discount_service.py   # Main DiscountService implementation
 │   ├── discount_types/
-│   │   ├── __init__.py           # Discount calculator exports
+│   │   ├── __init__.py           # Discount type exports
+│   │   ├── base_discount.py      # Abstract base discount class
+│   │   ├── discount_factory.py   # Factory for creating discount instances
 │   │   ├── brand_discount.py     # Brand-specific discount logic
 │   │   ├── category_discount.py  # Category-specific discount logic
 │   │   ├── bank_discount.py      # Bank offer discount logic
-│   │   └── voucher_discount.py   # Voucher discount logic
+│   │   ├── voucher_discount.py   # Voucher discount logic
+│   │   ├── tier_discount.py      # Customer tier discount logic
+│   │   ├── loyalty_discount.py   # Loyalty points discount logic
+│   │   └── seasonal_discount.py  # Seasonal discount logic
 │   └── utils/
 │       ├── __init__.py           # Utility exports
 │       └── helpers.py            # Helper functions
+├── examples/
+│   └── demo_usage.py             # Comprehensive usage example
 ├── tests/
 │   ├── __init__.py               # Test package
 │   ├── test_discount_service.py  # Main service tests
-│   ├── test_validation_service.py # Validation tests
-│   └── fake_data.py              # Test data and fixtures
-├── demo_usage.py                 # Comprehensive usage example
+│   └── test_models.py            # Model tests
 ├── requirements.txt              # Project dependencies
-├── setup.py                      # Package setup
 └── README.md                     # This file
 ```
 
-## Installation
+## 🚀 Installation
 
 ### Prerequisites
 
-- Python 3.7 or higher
+- Python 3.8 or higher
 - pip (Python package installer)
 
 ### Setup Steps
 
-1. **Clone or download the repository:**
+1. **Clone the repository:**
 
    ```bash
-   cd "Unifize Assignment/discount-service"
+   git clone <repository-url>
+   cd unifize-assignment
    ```
 
 2. **Create a virtual environment (recommended):**
@@ -79,23 +86,24 @@ discount-service/
    python -c "from src.services.discount_service import DiscountService; print('✅ Installation successful!')"
    ```
 
-## Usage
+## 🎯 Usage
 
 ### Quick Start - Run the Demo
 
 The easiest way to see the discount service in action is to run the interactive demo:
 
 ```bash
-python demo_usage.py
+python examples/demo_usage.py
 ```
 
-This will show you:
+This comprehensive demo showcases:
 
 - ✅ Multiple discount scenarios
 - ✅ Brand and category discounts
 - ✅ Bank card offers
 - ✅ Voucher code applications
-- ✅ Discount validation
+- ✅ Advanced discount combinations
+- ✅ Customer tier benefits
 - ✅ Real-world pricing examples
 
 ### Basic Usage Example
@@ -104,7 +112,10 @@ This will show you:
 import asyncio
 from decimal import Decimal
 from src.services.discount_service import DiscountService
-from src.models import Product, BrandTier, CartItem, CustomerProfile, CustomerTier, PaymentInfo
+from src.models.product import Product, BrandTier
+from src.models.cart import CartItem
+from src.models.customer import CustomerProfile
+from src.models.payment import PaymentInfo
 
 async def basic_example():
     # Initialize the service
@@ -117,18 +128,19 @@ async def basic_example():
         brand_tier=BrandTier.REGULAR,
         category="T-shirts",
         base_price=Decimal('1000'),
-        current_price=Decimal('500')  # After brand/category discounts
+        current_price=Decimal('1000')
     )
 
     # Create cart
-    cart_items = [CartItem(product=product, quantity=2, size="M")]
+    cart_items = [CartItem(product=product, quantity=2, size="M", price=product.base_price)]
 
     # Create customer
     customer = CustomerProfile(
         id="CUST001",
         name="John Doe",
         email="john@example.com",
-        tier=CustomerTier.GOLD
+        tier="premium",
+        loyalty_points=1500
     )
 
     # Create payment info
@@ -149,92 +161,131 @@ async def basic_example():
     print(f"Original Price: ₹{result.original_price}")
     print(f"Final Price: ₹{result.final_price}")
     print(f"Total Savings: ₹{result.original_price - result.final_price}")
+    print(f"Applied Discounts: {result.applied_discounts}")
 
 # Run the example
 asyncio.run(basic_example())
 ```
 
-### Testing
+### Advanced Usage - Custom Discount Configurations
 
-Run the complete test suite:
+```python
+async def advanced_example():
+    discount_service = DiscountService()
+
+    # Define custom discount configurations
+    discount_configs = [
+        {
+            "type": "brand",
+            "brand": "NIKE",
+            "discount_percentage": Decimal("25"),
+            "max_discount": Decimal("1000")
+        },
+        {
+            "type": "tier",
+            "required_tier": "premium",
+            "discount_percentage": Decimal("15"),
+            "max_discount": Decimal("500")
+        }
+    ]
+
+    # Apply advanced discounts
+    result = await discount_service.apply_advanced_discounts(
+        cart_items=cart_items,
+        customer=customer,
+        payment_info=payment_info,
+        discount_configs=discount_configs
+    )
+
+    print(f"Advanced Discount Result: {result}")
+```
+
+## 🧪 Testing
+
+Run the test suite to verify functionality:
 
 ```bash
 # Run all tests
-pytest tests/
-
-# Run with verbose output
-pytest tests/ -v
+python -m pytest tests/ -v
 
 # Run specific test file
-pytest tests/test_discount_service.py -v
+python -m pytest tests/test_discount_service.py -v
 
-# Run with coverage
+# Run with coverage (install pytest-cov first)
 pip install pytest-cov
-pytest tests/ --cov=src --cov-report=html
+python -m pytest tests/ --cov=src --cov-report=html
 ```
 
 ### Test Coverage
 
 The test suite covers:
 
-- ✅ Multiple discount scenarios
-- ✅ Individual discount types
+- ✅ Individual discount type calculations
+- ✅ Multiple discount combinations
 - ✅ Voucher validation logic
 - ✅ Edge cases and error conditions
-- ✅ Different customer tiers
-- ✅ Various bank offers
+- ✅ Customer tier validations
+- ✅ Bank offer applications
+- ✅ Factory pattern functionality
 
-## Key Features Demonstrated
+## 🎨 Key Features Demonstrated
 
-### 1. Multiple Discount Scenario
+### 1. Intelligent Discount Stacking
 
 ```
-PUMA T-shirt (₹1000) → ₹500 (40% brand + 10% category discount)
-+ SUPER69 voucher (69% off)
-+ ICICI bank offer (10% instant discount)
-= Maximum savings!
+Example Cart: NIKE Shoes (₹5000) + PUMA T-shirt (₹1000)
+↓
+Brand Discounts Applied: NIKE 35% + PUMA 40%
+↓
+Bank Offer: ICICI 10% instant discount
+↓
+Voucher Code: SUPER69 for additional savings
+↓
+Final Price with Maximum Savings!
 ```
 
-### 2. Discount Stacking Order
+### 2. Supported Discount Types
 
-1. **Brand/Category discounts** (applied to current_price)
-2. **Voucher codes** (applied to cart total)
-3. **Bank offers** (applied last)
+#### 🏷️ Brand Discounts
 
-### 3. Supported Discounts
+- **PUMA**: 40% off
+- **NIKE**: 35% off
+- **ADIDAS**: 30% off
+- **ZARA**: 25% off
+- **H&M**: 20% off
 
-#### Brand Discounts
+#### 🏪 Category Discounts
 
-- PUMA: 40% off
-- NIKE: 35% off
-- ADIDAS: 30% off
-- ZARA: 25% off
-- H&M: 20% off
+- **T-shirts**: 10% off
+- **Jeans**: 15% off
+- **Shoes**: 20% off
+- **Accessories**: 5% off
+- **Jackets**: 25% off
 
-#### Category Discounts
+#### 💳 Bank Offers
 
-- T-shirts: 10% off
-- Jeans: 15% off
-- Shoes: 20% off
-- Accessories: 5% off
-- Jackets: 25% off
+- **ICICI**: 10% off (max ₹500)
+- **HDFC**: 8% off (max ₹400)
+- **SBI**: 5% off (max ₹250)
+- **AXIS**: 12% off (max ₹600)
 
-#### Bank Offers
+#### 🎫 Voucher Codes
 
-- ICICI: 10% off (max ₹500)
-- HDFC: 8% off (max ₹400)
-- SBI: 5% off (max ₹250)
-- AXIS: 12% off (max ₹600)
+- **SUPER69**: Special discount (max ₹1000)
+- **PREMIUM20**: 20% off (max ₹500, Premium customers only)
+- **NEWUSER15**: 15% off (max ₹300, New users only)
 
-#### Voucher Codes
+#### 👑 Customer Tiers
 
-- SUPER69: 69% off (max ₹1000)
-- PREMIUM20: 20% off (max ₹500, Gold+ customers)
-- NEWUSER15: 15% off (max ₹300)
+- **Premium**: Exclusive discounts and higher limits
+- **Gold**: Enhanced discount percentages
+- **Silver**: Standard discount access
 
-## API Reference
+## 📚 API Reference
 
 ### DiscountService
+
+The main service class that orchestrates all discount calculations:
 
 ```python
 class DiscountService:
@@ -246,6 +297,14 @@ class DiscountService:
         voucher_code: Optional[str] = None
     ) -> DiscountedPrice
 
+    async def apply_advanced_discounts(
+        self,
+        cart_items: List[CartItem],
+        customer: CustomerProfile,
+        payment_info: Optional[PaymentInfo] = None,
+        discount_configs: Optional[List[Dict]] = None
+    ) -> DiscountedPrice
+
     async def validate_discount_code(
         self,
         code: str,
@@ -254,59 +313,92 @@ class DiscountService:
     ) -> bool
 ```
 
-## Troubleshooting
+### DiscountedPrice
+
+Result object containing discount calculation details:
+
+```python
+@dataclass
+class DiscountedPrice:
+    original_price: Decimal
+    final_price: Decimal
+    applied_discounts: Dict[str, Decimal]
+    message: str
+```
+
+## 🔧 Troubleshooting
 
 ### Common Issues
 
 1. **Import Errors**
 
    ```bash
-   # Make sure you're in the project root directory
-   pwd  # Should show: .../discount-service
+   # Ensure you're in the project root directory
+   pwd  # Should show: .../unifize-assignment
 
-   # Check Python path
-   python -c "import sys; print('\n'.join(sys.path))"
+   # Verify Python path includes current directory
+   export PYTHONPATH="${PYTHONPATH}:$(pwd)"
    ```
 
 2. **Module Not Found**
 
    ```bash
-   # Reinstall requirements
+   # Reinstall dependencies
    pip install -r requirements.txt
 
-   # Check if src directory exists
+   # Check project structure
    ls -la src/
    ```
 
 3. **Test Failures**
+
    ```bash
-   # Run tests in verbose mode to see detailed output
-   pytest tests/ -v -s
+   # Run tests with detailed output
+   python -m pytest tests/ -v -s
    ```
+
+4. **Decimal Type Errors**
+   - Ensure all price values use `Decimal` type instead of `float`
+   - Import: `from decimal import Decimal`
 
 ### Getting Help
 
 If you encounter issues:
 
-1. Check that all dependencies are installed
-2. Verify you're using Python 3.7+
-3. Make sure you're in the correct directory
-4. Run the demo script to verify setup
+1. ✅ Check that all dependencies are installed
+2. ✅ Verify you're using Python 3.8+
+3. ✅ Ensure you're in the correct directory
+4. ✅ Run the demo script to verify setup
+5. ✅ Check the test suite for working examples
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome! Please follow these steps:
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/new-discount-type`
+3. **Add tests for new functionality**
+4. **Ensure all tests pass**: `python -m pytest tests/`
+5. **Follow the existing code style**
+6. **Submit a pull request**
 
-## License
+### Adding New Discount Types
+
+The system uses a factory pattern for easy extensibility:
+
+```python
+# 1. Create new discount class inheriting from BaseDiscount
+# 2. Implement required abstract methods
+# 3. Register in DiscountFactory
+# 4. Add tests for the new discount type
+```
+
+## 📄 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
-**Happy Shopping with Maximum Savings! 🛒💰**
+**🛒 Happy Shopping with Maximum Savings! 💰**
+
+_Built with ❤️ for fashion e-commerce platforms_
