@@ -19,7 +19,7 @@ class BankDiscount:
             )
 
         original_price = self.calculate_original_price(cart_items)
-        discount_amount = (self.discount_percentage / Decimal(100)) * original_price
+        discount_amount = self.calculate_discount(original_price)
         final_price = original_price - discount_amount
 
         return DiscountedPrice(
@@ -28,6 +28,10 @@ class BankDiscount:
             applied_discounts={f"{self.bank_name} discount": discount_amount},
             message=f"{self.discount_percentage}% discount applied for {self.bank_name}."
         )
+
+    async def calculate_discount(self, cart_items: List[CartItem], customer) -> Decimal:
+        original_price = self.calculate_original_price(cart_items)
+        return (Decimal(str(self.discount_percentage)) / Decimal(100)) * original_price
 
     def calculate_original_price(self, cart_items: List[CartItem]) -> Decimal:
         return sum(item.product.current_price * item.quantity for item in cart_items)

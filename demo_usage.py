@@ -22,9 +22,10 @@ from typing import List
 sys.path.append('src')
 
 from src.services.discount_service import DiscountService
-from src.models import (
-    Product, BrandTier, CartItem, CustomerProfile, CustomerTier, PaymentInfo
-)
+from src.models.product import Product, BrandTier
+from src.models.cart import CartItem
+from src.models.customer import CustomerProfile
+from src.models.payment import PaymentInfo
 
 
 class DiscountServiceDemo:
@@ -66,8 +67,8 @@ class DiscountServiceDemo:
             id="CUST001",
             name="John Doe",
             email="john.doe@example.com", 
-            tier=CustomerTier.GOLD,
-            is_premium_member=True
+            tier="GOLD",
+            loyalty_points=1500
         )
     
     def create_cart_items(self, products: List[Product]) -> List[CartItem]:
