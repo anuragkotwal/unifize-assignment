@@ -63,7 +63,7 @@ unifize-assignment/
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/anuragkotwal/unifize-assignment.git
    cd unifize-assignment
    ```
 
